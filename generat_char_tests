@@ -1,0 +1,25 @@
+#to remove the \r do:
+#awk '{ sub("\r$", ""); print }' generat_char_tests > generat_char_tests
+#!/bin/bash
+echo starting
+for i in {1..26}
+do
+for j in {1..30}
+do
+A=$(./defects4j info -p Chart -b $i)
+B=$(awk 'f {print; exit} /List of modified/ {f=1}' <<<"$A")
+C=$(echo $B| cut -d ' ' -f 2)
+echo $C>>Class_list
+./defects4j checkout -p Chart -v $i"b" -w Chart/
+cd Chart/ant
+ant compile
+cd ..
+cd ..
+java -jar evosuite-1.0.3.jar -class $C -projectCP Chart/jfreechart-1.2.0-ea1.jar
+D=evosuite-tests/$(echo $C | tr '.' '/')_ESTest.java
+javac $D -cp "evosuite-runtime-1.0.3.jar:evosuite-tests:hamcrest-core-1.3.jar:junit-4.12.jar:Chart/jfreechart-1.2.0-ea1.jar"
+mkdir "testing"$i
+java -cp "evosuite-runtime-1.0.3.jar:evosuite-tests:junit-4.12.jar:hamcrest-core-1.3.jar:Chart/jfreechart-1.2.0-ea1.jar" org.junit.runner.JUnitCore $C"_ESTest" >> "testing"$i"/test"$j
+done
+rm -rf Chart
+done
